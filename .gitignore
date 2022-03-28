@@ -1,0 +1,8 @@
+.vscode
+.sconsign.dblite
+*.asc
+*.bin
+*.json
+*.rpt
+*.out
+*.gtkw
