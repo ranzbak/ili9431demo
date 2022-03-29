@@ -14,8 +14,6 @@ module lcd (
     reg reg_lcd_rs = 1'b1;
     reg [15:0] reg_lcd_data = 16'h0000;
     reg reg_pixel_byte = 1'b0;
-    reg reg_pixel_byte_next = 1'b0;
-    reg finish_init = 1'b0;
     reg [8:0] reg_pixel_x = 0;
     reg [7:0] reg_pixel_y = 0;
     reg [8:0] reg_counter = 0;
@@ -24,7 +22,7 @@ module lcd (
 
     // ILI9431 initialization sequence
     reg [6:0] init_sequence_counter = 0;
-    reg [8:0] init_sequence[0:100];
+    reg [8:0] init_sequence[0:101];
 
     initial begin
         init_sequence[7'h00] = 9'h0ef;
@@ -128,6 +126,7 @@ module lcd (
         init_sequence[7'h62] = 9'h035; // Tearing Effect Line ON
         init_sequence[7'h63] = 9'h000; //   V-Blanking information only (set to 01h for both V-Blanking and H-Blanking information
         init_sequence[7'h64] = 9'h02c; // Memory Write
+        init_sequence[7'h65] = 9'h1ff; // End of sequence
     end
 
     always @ (posedge i_clk) begin
@@ -138,7 +137,6 @@ module lcd (
             reg_lcd_rs          <= 1'b1;
             reg_lcd_data        <= 16'h0000;
             reg_pixel_byte      <= 1'b0;
-            reg_pixel_byte_next <= 1'b0;
             reg_pixel_x         <= 0;
             reg_pixel_y         <= 0;
             state <= 8'b0000_0010;
@@ -150,27 +148,18 @@ module lcd (
             reg_lcd_data        <= 16'h0000;
             reg_lcd_wr          <= 1'b1;
             reg_pixel_byte      <= 1'b0;
-            reg_pixel_byte_next <= 1'b0;
             state               <= 8'b0000_0100;
         end
 
         // LCD init state 
         if (state[2] == 1'b1) begin // LCD init state
             reg_pixel_byte <= 1'b0;
-            reg_pixel_byte_next <= 1'b0;
             // Put the config byte on the bus
             reg_lcd_rs   <= init_sequence[init_sequence_counter][8];
             reg_lcd_data[15:8] <= 8'h00;
             reg_lcd_data[7:0] <= init_sequence[init_sequence_counter][7:0];
             reg_lcd_wr   <= 1'b0;
             state <= 8'b0000_1000;
-
-            // When done jump to RGB data
-            if (init_sequence_counter == 100) begin
-                state <= 8'b0001_0000;
-                reg_lcd_data <= 16'h00;
-                reg_lcd_wr   <= 1'b1;
-            end
         end
 
         // Latch init byte
@@ -178,6 +167,13 @@ module lcd (
             init_sequence_counter <= init_sequence_counter + 1;
             reg_lcd_wr <= 1'b1;
             state <= 8'b0000_0100;
+
+            // When done jump to RGB data
+            if (init_sequence[init_sequence_counter] == 9'h1ff) begin
+                state <= 8'b0001_0000;
+                reg_lcd_data <= 16'h00;
+                reg_lcd_wr   <= 1'b1;
+            end
         end
 
         // Write the test pattorn to the LCD 
