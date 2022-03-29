@@ -164,22 +164,20 @@ module lcd (
             reg_lcd_data[7:0] <= init_sequence[init_sequence_counter][7:0];
             reg_lcd_wr   <= 1'b0;
             state <= 8'b0000_1000;
-        end
 
-        if (state[3] == 1'b1) begin
-            init_sequence_counter <= init_sequence_counter + 1;
-            reg_lcd_wr <= 1'b1;
+            // When done jump to RGB data
             if (init_sequence_counter == 100) begin
-                finish_init <= 1'b1;
-            end else begin
-                state <= 8'b0000_0100;
-            end
-
-            if (finish_init == 1'b1) begin
                 state <= 8'b0001_0000;
                 reg_lcd_data <= 16'h00;
                 reg_lcd_wr   <= 1'b1;
             end
+        end
+
+        // Latch init byte
+        if (state[3] == 1'b1) begin
+            init_sequence_counter <= init_sequence_counter + 1;
+            reg_lcd_wr <= 1'b1;
+            state <= 8'b0000_0100;
         end
 
         // Write the test pattorn to the LCD 
@@ -204,7 +202,7 @@ module lcd (
 
             // keep track of the screen position
             reg_lcd_wr   <= 1'b0;
-            reg_pixel_byte <= 1'b1; // Switch to output [7:0]
+            reg_pixel_byte <= 1'b0; // Switch to output [7:0]
             state <= 8'b0010_0000;
         end
 
@@ -217,7 +215,7 @@ module lcd (
         // handle second byte setup
         if (state[6] == 1'b1) begin
             reg_lcd_wr   <= 1'b0;
-            reg_pixel_byte <= 1'b0; // Switch to output [15:8]
+            reg_pixel_byte <= 1'b1; // Switch to output [15:8]
             state <= 8'b1000_0000;
         end
 
