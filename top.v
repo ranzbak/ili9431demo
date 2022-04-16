@@ -88,6 +88,19 @@ module top (
     .i_lcd_fmark()
   );
 
+  // Character ROM
+  wire [2:0] char_col;
+  wire [3:0] char_row;
+  wire [7:0] char_ascii;
+  wire       pixel;
+  pc_vga_8x16 my_char_rom (
+    .clk(clk),
+    .col(char_col),
+    .row(char_row),
+    .ascii(char_ascii),
+    .pixel(pixel)
+  );
+
   assign gpio_46 = 1'b1;
   assign led_green = GLED;
 

@@ -7,7 +7,12 @@ module lcd (
     output     [7:0] o_lcd_data,
     output           o_lcd_rs,
     output           o_lcd_wr,
-    input            i_lcd_fmark // Unused for now
+    input            i_lcd_fmark, // Unused for now
+
+    // Pixel interface
+    output [8:0] o_pixel_x,
+    output [7:0] o_pixel_y,
+    input [15:0] i_pixel_data
 );
 
     reg reg_lcd_wr = 1'b1;
@@ -181,20 +186,21 @@ module lcd (
             reg_lcd_rs   <= 1'b1;
 
             // generate test pattern 
-            reg_lcd_data <= 16'b0000000000000000;
-            // Y border
-            if (reg_pixel_y < 16) begin
-                reg_lcd_data <= 16'b1111_1000_0000_0000;
-            end else begin
-                // reg_lcd_data <= 16'b0000011111100000;
-                // reg_lcd_data <= {!reg_pixel_x[8:4], reg_pixel_y[7:2], reg_pixel_x[8:4]};
-                if (reg_pixel_x[3:0] == 0) begin
-                    reg_lcd_data <= 16'b0000_0111_1110_0000;
-                end
-                if (reg_pixel_y[3:0] == 0) begin
-                    reg_lcd_data <= 16'h0000_0000_0001_1111;
-                end
-            end
+            // reg_lcd_data <= 16'b0000000000000000;
+            // // Y border
+            // if (reg_pixel_y < 16) begin
+            //     reg_lcd_data <= 16'b1111_1000_0000_0000;
+            // end else begin
+            //     if (reg_pixel_x[3:0] == 0) begin
+            //         reg_lcd_data <= 16'b0000_0111_1110_0000;
+            //     end
+            //     if (reg_pixel_y[3:0] == 0) begin
+            //         reg_lcd_data <= 16'b0000_0000_0001_1111;
+            //     end
+            // end
+
+            // Pixel data to output
+            reg_lcd_data <= i_pixel_data;
 
             // keep track of the screen position
             reg_lcd_wr   <= 1'b0;
@@ -248,5 +254,9 @@ module lcd (
     assign o_lcd_wr   = reg_lcd_wr;
     assign o_lcd_rs   = reg_lcd_rs;
     assign o_lcd_data = reg_pixel_byte ? reg_lcd_data[15:8] : reg_lcd_data[7:0];
+
+    // X and Y Position out of the module
+    assign o_pixel_x = reg_pixel_x;
+    assign o_pixel_y = reg_pixel_y;
 
 endmodule
